@@ -16,15 +16,15 @@ namespace RmqServices
         public static string outputGuid = "";
         public static string valueOutput = "";
         public static string messageSend = "";
-        public static string hostname = "167.205.7.226";
+        public static string hostname = "192.168.0.5";
         public static int port = 5672;
         public static string user = "homeauto";
         public static string pass = "homeauto12345!";
-        public static string vhost = "/homeauto";
+        public static string vhost = "/Homeauto";
         public static string exchange = "amq.topic";
-        public static string queue = "Homeauto";
+        public static string queue = "Sensor";
         public static string routingKeySubscribe = "HomeautoIn";
-        public static string routingKeyPublish = "HomeautoOut";
+        public static string routingKeyPublish = "Aktuator";
 
         public static string pathDatabase = "/home/nurman/Documents/Code/Worker/homeauto.db";
 
@@ -88,6 +88,7 @@ namespace RmqServices
 
 
                             messageSend = outputGuid + "#" + valueOutput;
+
                             channel.BasicPublish(
                             exchange: exchange,
                             routingKey: routingKeyPublish,
@@ -95,6 +96,7 @@ namespace RmqServices
                             body: Encoding.UTF8.GetBytes(messageSend)
 
                         );
+                        Console.WriteLine(messageSend);
                         }
 
 

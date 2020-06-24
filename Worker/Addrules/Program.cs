@@ -8,10 +8,9 @@ namespace Addrules
 {
     class Program
     {
-        public static string btnName = "";
-        public static string vlButton = "";
-        public static string lmpName = "";
-        public static string vLamp = "";
+        public static string macAddress = "";
+        public static string guidDevice = "";
+        public static string typeDevice = "";
         static void Main(string[] args)
         {
             databaseInsert();
@@ -28,7 +27,7 @@ namespace Addrules
         {
 
             var connectionStringBuilder = new SqliteConnectionStringBuilder();
-            connectionStringBuilder.DataSource = "/home/nurman/Documents/Code/Worker/Rulesiot.db";
+            connectionStringBuilder.DataSource = "/home/nurman/Documents/Code/Worker/homeauto.db";
             using (var connectionDB = new SqliteConnection(connectionStringBuilder.ConnectionString))
             {
 
@@ -47,36 +46,30 @@ namespace Addrules
                 {
                     var insertCmd = connectionDB.CreateCommand();
 
-                    Console.WriteLine("Enter Name Button:");
-                    btnName = Console.ReadLine();
-                    Console.WriteLine("Your Button Is: " + btnName);
+                    Console.WriteLine("Enter Mac Device:");
+                    macAddress = Console.ReadLine();
+                    Console.WriteLine("Your Mac Is: " + macAddress);
 
-                    Console.WriteLine("Enter Value Button:");
-                    vlButton = Console.ReadLine();
-                    Console.WriteLine("Your Button Is: " + vlButton);
+                    Console.WriteLine("Enter Guid Device");
+                    guidDevice = Console.ReadLine();
+                    Console.WriteLine("Your Button Is: " + guidDevice);
 
-                    Console.WriteLine("Enter Name Lamp:");
-                    lmpName = Console.ReadLine();
-                    Console.WriteLine("Your Button Is: " + lmpName);
+                    Console.WriteLine("Enter Type Device:");
+                    typeDevice = Console.ReadLine();
+                    Console.WriteLine("Your Button Is: " + typeDevice);
 
-                    Console.WriteLine("Enter Name Button:");
-                    vLamp = Console.ReadLine();
-                    Console.WriteLine("Your Button Is: " + vLamp);
 
-                    insertCmd.CommandText = "INSERT INTO Rules (Guidsensor,Valuesensor,Guidaktuator,Valueaktuator) Values(@Guidsensor,@Valuesensor,@Guidaktuator,@Valueaktuator)";
-                    insertCmd.Parameters.AddWithValue("@Guidsensor", btnName);
-                    insertCmd.Parameters.AddWithValue("@Valuesensor", vlButton);
-                    insertCmd.Parameters.AddWithValue("@Guidaktuator", lmpName);
-                    insertCmd.Parameters.AddWithValue("@Valueaktuator", vLamp);
-                    Console.WriteLine(btnName);
-                    Console.WriteLine(vlButton);
-                    Console.WriteLine(lmpName);
-                    Console.WriteLine(vLamp);
+
+                    insertCmd.CommandText = "INSERT INTO registeriot (mac,guid,type) Values(@mac,@guid,@type)";
+                    insertCmd.Parameters.AddWithValue("@mac", macAddress);
+                    insertCmd.Parameters.AddWithValue("@guid", guidDevice);
+                    insertCmd.Parameters.AddWithValue("@type", typeDevice);
+
 
                     insertCmd.ExecuteNonQuery();
 
                     transaction.Commit();
-                    Console.WriteLine("Berhasil update data");
+                    Console.WriteLine("Success Update Data to Database");
 
 
 
