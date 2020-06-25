@@ -98,18 +98,6 @@ namespace RegistrationServices
                     Console.WriteLine(minorDevice);
 
                     connectionDB.Open();
-                    //var transaction = connectionDB.BeginTransaction();
-                    // var insertCmd = connectionDB.CreateCommand();
-                    // insertCmd.CommandText = "INSERT INTO Rules (Guidsensor,Valuesensor,Guidaktuator,Valueaktuator) Values(@Guidsensor,@Valuesensor,@Guidaktuator,@Valueaktuator)";
-                    // insertCmd.Parameters.AddWithValue("@Guidsensor", inputGuid);
-                    // insertCmd.Parameters.AddWithValue("@Valuesensor", valueInput);
-                    // insertCmd.Parameters.AddWithValue("@Guidaktuator", outputGuid);
-                    // insertCmd.Parameters.AddWithValue("@Valueaktuator", valueOutput);
-
-
-                    // insertCmd.ExecuteNonQuery();
-
-
                     var selectCmd = connectionDB.CreateCommand();
                     selectCmd.CommandText = "SELECT * FROM registeriot  WHERE serial_number=@serial_number AND mac=@mac";
                     selectCmd.Parameters.AddWithValue("@serial_number", serialNumber);
