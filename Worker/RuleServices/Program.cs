@@ -54,7 +54,7 @@ namespace RuleServices
         public static string messageSend = "";
 
         public static string statusRegistered = "1";
-        public static string statusRegister = "0";
+        public static string statusRegister = "Success Add Rule";
 
 
 
@@ -80,10 +80,10 @@ namespace RuleServices
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
                     dynamic dataJson = JObject.Parse(message);
-                    serialNumberOutput = dataJson.serialnumber;
-                    valueOutput = dataJson.mac;
-                    serialNumberInput = dataJson.type;
-                    valueInput = dataJson.qty;
+                    serialNumberInput = dataJson.guidinput;
+                    valueInput = dataJson.valueinput;
+                    serialNumberOutput = dataJson.guidoutput;
+                    valueOutput = dataJson.valueoutput;
                     Console.WriteLine(serialNumberOutput);
                     Console.WriteLine(valueOutput);
                     Console.WriteLine(serialNumberInput);
@@ -93,27 +93,26 @@ namespace RuleServices
 
                     using (var transaction = connectionDB.BeginTransaction())
                     {
-                        Console.WriteLine("tidak ada data");
                         var insertCmd = connectionDB.CreateCommand();
                         insertCmd.CommandText = "INSERT INTO activityiot (input_guid,input_value,output_guid,output_value) Values(@inputguid,@valueinput,@outputguid,@valueoutput)";
                         insertCmd.Parameters.AddWithValue("@inputguid", serialNumberOutput);
                         insertCmd.Parameters.AddWithValue("@valueinput", valueOutput);
                         insertCmd.Parameters.AddWithValue("@outputguid", serialNumberInput);
-                        insertCmd.Parameters.AddWithValue("@valueinput", valueInput);
+                        insertCmd.Parameters.AddWithValue("@valueoutput", valueInput);
                         insertCmd.ExecuteNonQuery();
                         transaction.Commit();
                         Console.WriteLine("Success Insert new data");
 
-                        // messageSend = statusRegister;
+                        messageSend = statusRegister;
 
-                        // channel.BasicPublish(
-                        // exchange: exchange,
-                        // routingKey: routingKeyPublish,
-                        // basicProperties: null,
-                        //  body: Encoding.UTF8.GetBytes(messageSend)
+                        channel.BasicPublish(
+                        exchange: exchange,
+                        routingKey: routingKeyPublish,
+                        basicProperties: null,
+                         body: Encoding.UTF8.GetBytes(messageSend)
 
-                        // );
-                        // Console.WriteLine("status device " + messageSend + " sent");
+                        );
+                        Console.WriteLine("status device " + messageSend + " sent");
                     }
 
 
