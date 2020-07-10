@@ -17,8 +17,8 @@ namespace Loggingservices
         /**
          * RMQ and message variable  
          **/
-        public static string inputGuid = "";
-        public static string valueInput = "";
+        public static string guidOutput= "";
+        public static string valueOutput= "";
         public static string messageSend = "";
         public static string hostname = "192.168.0.5";
         public static int port = 5672;
@@ -57,8 +57,8 @@ namespace Loggingservices
                     foreach (var datas in dataParsing)
                     {
                         //System.Console.WriteLine($"{datas}>");
-                        inputGuid = dataParsing[0];
-                        valueInput = dataParsing[1];
+                        guidOutput = dataParsing[0];
+                        valueOutput = dataParsing[1];
 
                     }
 
@@ -66,9 +66,9 @@ namespace Loggingservices
                     {
                         var insertCmd = connectionDB.CreateCommand();
                         insertCmd.CommandText = "INSERT INTO logsiot (output_guid,output_value,time_device) Values(@guid,@value,@time)";
-                        insertCmd.Parameters.AddWithValue("@guid", inputGuid);
-                        insertCmd.Parameters.AddWithValue("@value", v);
-                        insertCmd.Parameters.AddWithValue("@time", serialNumberInput);
+                        insertCmd.Parameters.AddWithValue("@guid", guidOutput);
+                        insertCmd.Parameters.AddWithValue("@value",valueOutput);
+                        insertCmd.Parameters.AddWithValue("@time", now);
                         insertCmd.ExecuteNonQuery();
                         transaction.Commit();
                         Console.WriteLine("Success Insert new data");
