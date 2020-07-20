@@ -35,14 +35,14 @@
 /*
    Wifi Variable
 */
-const char* ssid = "LSKKHomeAuto";
-const char* password = "1234567890";
+const char* ssid = "LSKK_Lantai2";
+const char* password = "lskk12345";
 
 
 /*
    MQTT Variable
 */
-const char* mqtt_server     = "192.168.4.2";
+const char* mqtt_server     = "192.168.4.62";
 const char* mqtt_user       = "/Homeauto:homeauto";
 const char* mqtt_pass       = "homeauto12345!";
 const char* CL              = "IoT-Local-1";

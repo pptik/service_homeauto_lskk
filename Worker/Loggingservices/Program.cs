@@ -30,7 +30,7 @@ namespace Loggingservices
         public static string routingKeySubscribe = "HomeautoIn";
         public static string routingKeyPublish = "Aktuator";
 
-        public static string pathDatabase = "/home/nurman/Documents/Code/Worker/homeauto.db";
+        public static string pathDatabase = "/home/nurman/Documents/Code/Worker/logs.db";
 
         static void Main(string[] args)
         {
@@ -65,7 +65,7 @@ namespace Loggingservices
                     using (var transaction = connectionDB.BeginTransaction())
                     {
                         var insertCmd = connectionDB.CreateCommand();
-                        insertCmd.CommandText = "INSERT INTO logsiot (output_guid,output_value,time_device) Values(@guid,@value,@time)";
+                        insertCmd.CommandText = "INSERT INTO logs (output_guid_device,output_value_device,time_device) Values(@guid,@value,@time)";
                         insertCmd.Parameters.AddWithValue("@guid", guidOutput);
                         insertCmd.Parameters.AddWithValue("@value",valueOutput);
                         insertCmd.Parameters.AddWithValue("@time", now);
