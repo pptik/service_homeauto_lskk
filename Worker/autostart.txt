@@ -1,0 +1,17 @@
+// GNU nano 3.2  /home/pi/.config/autostart/lxterm-autostart.desktop       
+[Desktop Entry]
+Wait=60
+Encoding=UTF-8
+Name=RmqServices
+Name=Terminal autostart
+
+Comment=Start a terminal and list directory
+
+Exec=/usr/bin/lxterm -hold  -e 'sleep 30  && dotnet  ~/home/pi/Documents/Worker/RmqServices/bin/Debug/netcoreapp3.1/RmqServices.dll'
+
+Terminal=true
+
+
+
+
+
