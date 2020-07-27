@@ -1,12 +1,22 @@
-﻿namespace daemon_rmqservices
+﻿/*************************************************************************************************************************
+ *                               DEVELOPMENT BY      : NURMAN HARIYANTO - PT.LSKK & PPTIK                                *
+ *                                                VERSION             : 2                                                *
+ *                                             TYPE APPLICATION    : WORKER                                              *
+ * DESCRIPTION         : GET DATA FROM MQTT (OUTPUT DEVICE) CHECK TO DB RULES AND SEND BACK (INPUT DEVICE) IF DATA EXIST *
+ *************************************************************************************************************************/
+
+namespace daemon_rmqservices
 {
     using System.Configuration;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.Text;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
     using RabbitMQ.Client;
     using RabbitMQ.Client.Events;
+    using Microsoft.Data.Sqlite;
+
 
 
     public class ConsumeRabbitMQHostedService : BackgroundService
@@ -20,13 +30,19 @@
         private static string RMQUsername = ConfigurationManager.AppSettings["RMQUsername"];
         private static string RMQPassword = ConfigurationManager.AppSettings["RMQPassword"];
         private static string RMQQueue = ConfigurationManager.AppSettings["RMQQueue"];
-        private static string RMQSubRoutingKey = ConfigurationManager.AppSettings["RMQSubRoutingKey"];
+        private static string RMQExc = ConfigurationManager.AppSettings["RMQExc"];
+        private static string RMQPubRoutingKey = ConfigurationManager.AppSettings["RMQPubRoutingKey"];
+        private static string DBPath = ConfigurationManager.AppSettings["DBPath"];
+        private static string InputGuid = "";
+        private static string ValueInput = "";
+        private static string OutputGuid = "";
+        private static string ValueOutput = "";
+        private static string MessageSend = "";
 
 
 
         public ConsumeRabbitMQHostedService(ILoggerFactory loggerFactory)
         {
-
 
             this._logger = loggerFactory.CreateLogger<ConsumeRabbitMQHostedService>();
             InitRabbitMQ();
@@ -34,8 +50,6 @@
 
         private void InitRabbitMQ()
         {
-
-
 
             var factory = new ConnectionFactory { HostName = RMQHost, VirtualHost = RMQVHost, UserName = RMQUsername, Password = RMQPassword };
 
@@ -45,16 +59,16 @@
             // create channel
             _channel = _connection.CreateModel();
 
-            // _channel.ExchangeDeclare("demo.exchange", ExchangeType.Topic);
-            // _channel.QueueDeclare("demo.queue.log", false, false, false, null);
-            // _channel.QueueBind("demo.queue.log", "demo.exchange", "demo.queue.*", null);
-            // _channel.BasicQos(0, 1, false);
+
 
             _connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
+
+
+
             stoppingToken.ThrowIfCancellationRequested();
 
             var consumer = new EventingBasicConsumer(_channel);
@@ -63,46 +77,73 @@
                 // received message
                 var body = ea.Body.ToArray();
                 var content = System.Text.Encoding.UTF8.GetString(body);
-
                 // handle the received message
-                HandleMessage(content);
+                HandleMessageToDB(content);
                 _channel.BasicAck(ea.DeliveryTag, false);
             };
 
             consumer.Shutdown += OnConsumerShutdown;
-            // consumer.Registered += OnConsumerRegistered;
-            // consumer.Unregistered += OnConsumerUnregistered;
-            // consumer.ConsumerCancelled += OnConsumerConsumerCancelled;
 
             _channel.BasicConsume(RMQQueue, false, consumer);
             return Task.CompletedTask;
         }
 
-        private void HandleMessage(string content)
+        private void HandleMessageToDB(string content)
         {
-            // we just print this message 
-            _logger.LogInformation($"consumer received {content}");
+            var connectionStringBuilder = new SqliteConnectionStringBuilder();
+            connectionStringBuilder.DataSource = DBPath;
+            var connectionDB = new SqliteConnection(connectionStringBuilder.ConnectionString);
+
+            //just print this message 
+             _logger.LogInformation($"consumer received {content}");
+
+            //And splite message to Query Parameters
+
+            string[] dataParsing = content.Split('#');
+            foreach (var datas in dataParsing)
+            {
+                //System.Console.WriteLine($"{datas}>");
+                InputGuid = dataParsing[0];
+                ValueInput = dataParsing[1];
+
+            }
+            connectionDB.Open();
+            var selectCmd = connectionDB.CreateCommand();
+            selectCmd.CommandText = "SELECT * FROM activityiot  WHERE input_guid=@Guidinput AND input_value=@Valueinput";
+            selectCmd.Parameters.AddWithValue("@Guidinput", InputGuid);
+            selectCmd.Parameters.AddWithValue("@Valueinput", ValueInput);
+            using (var reader = selectCmd.ExecuteReader())
+            {
+
+                while (reader.Read())
+                {
+                    OutputGuid = reader.GetString(3);
+                    ValueOutput = reader.GetString(4);
+
+
+                    MessageSend = OutputGuid + "#" + ValueOutput;
+
+                    _channel.BasicPublish(exchange: RMQExc,
+                                            routingKey: RMQPubRoutingKey,
+                                            basicProperties: null,
+                                            body: Encoding.UTF8.GetBytes(MessageSend)
+                    );
+
+                   
+
+                }
+
+                connectionDB.Close();
+            }
+             _logger.LogInformation("Sucess Send Data");
+
+
         }
 
         private void RabbitMQ_ConnectionShutdown(object sender, ShutdownEventArgs e)
         {
             _logger.LogInformation($"connection shut down {e.ReplyText}");
         }
-
-        // private void OnConsumerConsumerCancelled(object sender, ConsumerEventArgs e)
-        // {
-        //     _logger.LogInformation($"consumer cancelled {e.ConsumerTag}");
-        // }
-
-        // private void OnConsumerUnregistered(object sender, ConsumerEventArgs e)
-        // {
-        //     _logger.LogInformation($"consumer unregistered {e.ConsumerTag}");
-        // }
-
-        // private void OnConsumerRegistered(object sender, ConsumerEventArgs e)
-        // {
-        //     _logger.LogInformation($"consumer registered {e.ConsumerTag}");
-        // }
 
         private void OnConsumerShutdown(object sender, ShutdownEventArgs e)
         {

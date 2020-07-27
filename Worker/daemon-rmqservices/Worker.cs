@@ -1,3 +1,10 @@
+/*************************************************************************************************************************
+ *                               DEVELOPMENT BY      : NURMAN HARIYANTO - PT.LSKK & PPTIK                                *
+ *                                                VERSION             : 2                                                *
+ *                                             TYPE APPLICATION    : WORKER                                              *
+ * DESCRIPTION         : GET DATA FROM MQTT (OUTPUT DEVICE) CHECK TO DB RULES AND SEND BACK (INPUT DEVICE) IF DATA EXIST *
+ *************************************************************************************************************************/
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
