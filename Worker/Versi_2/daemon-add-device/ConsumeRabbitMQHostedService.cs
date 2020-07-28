@@ -35,11 +35,15 @@ namespace daemon_add_device
         private static string RMQPubRoutingKey = ConfigurationManager.AppSettings["RMQPubRoutingKey"];
         private static string DBPath = ConfigurationManager.AppSettings["DBPath"];
         private static string MessageSend = "";
-        private static string serialNumberOutput = "";
-        private static string valueOutput = "";
-        private static string serialNumberInput = "";
-        private static string valueInput = "";
-        private static string StatusRegister = "Success Add Rule";
+        private static string serialNumber = "";
+        private static string macAddress = "";
+        private static string typeDevice = "";
+        private static string qtyDevice = "";
+        private static string nameDevice = "";
+        private static string versionDevice = "";
+        private static string minorDevice = "";
+        private static string statusRegistered = "1";
+        private static string statusRegister = "0";
 
 
         public ConsumeRabbitMQHostedService(ILoggerFactory loggerFactory)
@@ -93,41 +97,82 @@ namespace daemon_add_device
             var connectionDB = new SqliteConnection(connectionStringBuilder.ConnectionString);
 
             //just print this message 
-            //_logger.LogInformation($"consumer received {content}");
+            _logger.LogInformation($"consumer received {content}");
 
             //And splite message to Query Parameters (NP: Income Data message must same with data structure)
             dynamic dataJson = JObject.Parse(content);
-            serialNumberInput = dataJson.guidinput;
-            valueInput = dataJson.valueinput;
-            serialNumberOutput = dataJson.guidoutput;
-            valueOutput = dataJson.valueoutput;
+            serialNumber = dataJson.serialnumber;
+            macAddress = dataJson.mac;
+            typeDevice = dataJson.type;
+            qtyDevice = dataJson.qty;
+            nameDevice = dataJson.name;
+            versionDevice = dataJson.version;
+            minorDevice = dataJson.minor;
 
             //Open Connection Database
             connectionDB.Open();
+
             //Create command/query with param from mesage content  
-            using (var transaction = connectionDB.BeginTransaction())
+            var selectCmd = connectionDB.CreateCommand();
+            selectCmd.CommandText = "SELECT * FROM registeriot  WHERE serial_number=@serial_number AND mac=@mac";
+            selectCmd.Parameters.AddWithValue("@serial_number", serialNumber);
+            selectCmd.Parameters.AddWithValue("@mac", macAddress);
+
+            SqliteDataReader reader = null;
+            reader = selectCmd.ExecuteReader();
+
+            if (reader.HasRows)
             {
-                var insertCmd = connectionDB.CreateCommand();
-                insertCmd.CommandText = "INSERT INTO activityiot (input_guid,input_value,output_guid,output_value) Values(@inputguid,@valueinput,@outputguid,@valueoutput)";
-                insertCmd.Parameters.AddWithValue("@inputguid", serialNumberOutput);
-                insertCmd.Parameters.AddWithValue("@valueinput", valueOutput);
-                insertCmd.Parameters.AddWithValue("@outputguid", serialNumberInput);
-                insertCmd.Parameters.AddWithValue("@valueoutput", valueInput);
-                insertCmd.ExecuteNonQuery();
-                transaction.Commit();
+                while (reader.Read())
+                {
 
-                MessageSend = StatusRegister;
+                    var dbSerialNumber = reader.GetString(1);
 
-                _channel.BasicPublish(
-                exchange: RMQExc,
-                routingKey: RMQPubRoutingKey,
-                basicProperties: null,
-                 body: Encoding.UTF8.GetBytes(MessageSend)
+                    MessageSend = serialNumber + "#" + statusRegistered;
 
-                );
-                
+                    _channel.BasicPublish(
+                    exchange: RMQExc,
+                    routingKey: RMQPubRoutingKey,
+                    basicProperties: null,
+                     body: Encoding.UTF8.GetBytes(MessageSend)
+
+                    );
+                }
+                reader.Close();
             }
 
+            else
+            {
+                using (var transaction = connectionDB.BeginTransaction())
+                {
+
+                    var insertCmd = connectionDB.CreateCommand();
+                    insertCmd.CommandText = "INSERT INTO registeriot (serial_number,mac,type,qty,name,version,minor) Values(@serialnumber,@mac,@type,@qty,@name,@version,@minor)";
+                    insertCmd.Parameters.AddWithValue("@serialnumber", serialNumber);
+                    insertCmd.Parameters.AddWithValue("@mac", macAddress);
+                    insertCmd.Parameters.AddWithValue("@type", typeDevice);
+                    insertCmd.Parameters.AddWithValue("@qty", qtyDevice);
+                    insertCmd.Parameters.AddWithValue("@name", nameDevice);
+                    insertCmd.Parameters.AddWithValue("@version", versionDevice);
+                    insertCmd.Parameters.AddWithValue("@minor", minorDevice);
+                    insertCmd.ExecuteNonQuery();
+                    transaction.Commit();
+
+
+                    MessageSend = serialNumber + "#" + statusRegister;
+
+                    _channel.BasicPublish(
+                    exchange: RMQExc,
+                    routingKey: RMQPubRoutingKey,
+                    basicProperties: null,
+                     body: Encoding.UTF8.GetBytes(MessageSend)
+
+                    );
+                }
+            }
+
+
+            connectionDB.Close();
 
         }
 

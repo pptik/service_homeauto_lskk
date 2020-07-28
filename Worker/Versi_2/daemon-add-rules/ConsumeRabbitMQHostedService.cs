@@ -125,8 +125,10 @@ namespace daemon_add_rules
                  body: Encoding.UTF8.GetBytes(MessageSend)
 
                 );
-                
+
             }
+            connectionDB.Close();
+
 
 
         }

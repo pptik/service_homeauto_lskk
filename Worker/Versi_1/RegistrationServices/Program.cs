@@ -31,7 +31,7 @@ namespace RegistrationServices
         MQTT Variable
         */
 
-        public static string hostname = "192.168.0.5";
+        public static string hostname = "192.168.4.2";
         public static int port = 5672;
         public static string user = "homeauto";
         public static string pass = "homeauto12345!";
@@ -102,6 +102,7 @@ namespace RegistrationServices
                     selectCmd.CommandText = "SELECT * FROM registeriot  WHERE serial_number=@serial_number AND mac=@mac";
                     selectCmd.Parameters.AddWithValue("@serial_number", serialNumber);
                     selectCmd.Parameters.AddWithValue("@mac", macAddress);
+                    
 
 
 
@@ -109,9 +110,7 @@ namespace RegistrationServices
 
 
                     SqliteDataReader reader = null;
-
                     reader = selectCmd.ExecuteReader();
-
                     if (reader.HasRows)
                     {
                         while (reader.Read())
@@ -138,6 +137,7 @@ namespace RegistrationServices
 
                     else
                     {
+                        Console.WriteLine("test");
                         using (var transaction = connectionDB.BeginTransaction())
                         {
                             Console.WriteLine("tidak ada data");
@@ -166,18 +166,7 @@ namespace RegistrationServices
                             Console.WriteLine("status device " + messageSend + " sent");
                         }
                     }
-
-
-
-
-
-
-
                     connectionDB.Close();
-
-
-
-
                 };
                 channel.BasicConsume(queue: queue,
                                      autoAck: true,
@@ -188,8 +177,5 @@ namespace RegistrationServices
             }
 
         }
-
-
-
     }
 }
