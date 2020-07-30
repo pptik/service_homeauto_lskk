@@ -1,0 +1,11 @@
+[Unit]
+Description=rule-smarthome
+After=network.target
+
+[Service]
+ExecStart=/home/orangepi/dotnet-arm32/dotnet  /home/orangepi/Documents/service_homeauto_lskk/Worker/daemon-add-rules/bin/Debug/netcoreapp3.1/daemon-add-rules.dll
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

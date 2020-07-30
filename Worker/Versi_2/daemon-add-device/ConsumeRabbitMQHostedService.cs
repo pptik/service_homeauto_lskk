@@ -1,9 +1,10 @@
-﻿/*************************************************************************************************************************
- *                               DEVELOPMENT BY      : NURMAN HARIYANTO - PT.LSKK & PPTIK                                *
- *                                                VERSION             : 2                                                *
- *                                             TYPE APPLICATION    : WORKER                                              *
- * DESCRIPTION         : GET DATA FROM MQTT (OUTPUT DEVICE) CHECK TO DB RULES AND SEND BACK (INPUT DEVICE) IF DATA EXIST *
- *************************************************************************************************************************/
+﻿/***************************************************************************************************************************************
+ *                                      DEVELOPMENT BY      : NURMAN HARIYANTO - PT.LSKK & PPTIK                                       *
+ *                                                       VERSION             : 2                                                       *
+ *                                                    TYPE APPLICATION    : WORKER                                                     *
+ * DESCRIPTION         : GET DATA FROM MQTT (DEVICE) CHECK TO DB DEVICE AND SEND BACK (STATUS 0 = SUCESS SAVE DATA AND 1=IF DATA EXIST *
+ ***************************************************************************************************************************************/
+
 
 namespace daemon_add_device
 {
