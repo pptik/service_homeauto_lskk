@@ -1,0 +1,2 @@
+internet = 1
+server = 0
