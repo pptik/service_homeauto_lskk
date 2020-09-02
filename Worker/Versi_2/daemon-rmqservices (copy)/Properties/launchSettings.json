@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "daemon_rmqservices": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

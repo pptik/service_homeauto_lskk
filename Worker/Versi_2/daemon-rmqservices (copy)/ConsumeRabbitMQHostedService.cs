@@ -1,12 +1,11 @@
-﻿
-/*************************************************************************************************************************
+﻿/*************************************************************************************************************************
  *                               DEVELOPMENT BY      : NURMAN HARIYANTO - PT.LSKK & PPTIK                                *
  *                                                VERSION             : 2                                                *
  *                                             TYPE APPLICATION    : WORKER                                              *
  * DESCRIPTION         : GET DATA FROM MQTT (OUTPUT DEVICE) CHECK TO DB RULES AND SEND BACK (INPUT DEVICE) IF DATA EXIST *
  *************************************************************************************************************************/
 
-namespace daemon_rmqservices_log
+namespace daemon_rmqservices
 {
     using System.Configuration;
     using System.Threading;
@@ -17,7 +16,6 @@ namespace daemon_rmqservices_log
     using RabbitMQ.Client;
     using RabbitMQ.Client.Events;
     using Microsoft.Data.Sqlite;
-    using System;
 
 
 
@@ -35,10 +33,12 @@ namespace daemon_rmqservices_log
         private static string RMQExc = ConfigurationManager.AppSettings["RMQExc"];
         private static string RMQPubRoutingKey = ConfigurationManager.AppSettings["RMQPubRoutingKey"];
         private static string DBPath = ConfigurationManager.AppSettings["DBPath"];
-        private static string serialNumber = "";
-        private static string valueOutput = "";   
-           
-  
+        private static string InputGuid = "";
+        private static string ValueInput = "";
+        private static string OutputGuid = "";
+        private static string ValueOutput = "";
+        private static string MessageSend = "";
+
 
 
         public ConsumeRabbitMQHostedService(ILoggerFactory loggerFactory)
@@ -66,6 +66,9 @@ namespace daemon_rmqservices_log
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
+
+
+
             stoppingToken.ThrowIfCancellationRequested();
 
             var consumer = new EventingBasicConsumer(_channel);
@@ -76,7 +79,7 @@ namespace daemon_rmqservices_log
                 var content = System.Text.Encoding.UTF8.GetString(body);
                 // handle the received message
                 HandleMessageToDB(content);
-                _channel.BasicAck(ea.DeliveryTag, true);
+                _channel.BasicAck(ea.DeliveryTag, false);
             };
 
             consumer.Shutdown += OnConsumerShutdown;
@@ -92,44 +95,47 @@ namespace daemon_rmqservices_log
             var connectionDB = new SqliteConnection(connectionStringBuilder.ConnectionString);
 
             //just print this message 
-            _logger.LogInformation($"consumer received {content}");
+             _logger.LogInformation($"consumer received {content}");
 
-            //And splite message to Query Parameters (NP: Income Data message must same with data structure)
+            //And splite message to Query Parameters
 
             string[] dataParsing = content.Split('#');
             foreach (var datas in dataParsing)
             {
                 //System.Console.WriteLine($"{datas}>");
-                serialNumber = dataParsing[0];
-                valueOutput = dataParsing[1];
-
+                InputGuid = dataParsing[0];
+                ValueInput = dataParsing[1];
 
             }
-
-            DateTime now = DateTime.Now;
-            String timeStamp = now.ToString();
-             _logger.LogInformation($"consumer received {serialNumber}");
-             _logger.LogInformation($"consumer received {valueOutput}");
-
-             
-
-
-            //Open Connection Database
             connectionDB.Open();
-            //Create command/query with param from mesage content  
-            using (var transaction = connectionDB.BeginTransaction())
+            var selectCmd = connectionDB.CreateCommand();
+            selectCmd.CommandText = "SELECT * FROM activityiot  WHERE input_guid=@Guidinput AND input_value=@Valueinput";
+            selectCmd.Parameters.AddWithValue("@Guidinput", InputGuid);
+            selectCmd.Parameters.AddWithValue("@Valueinput", ValueInput);
+            using (var reader = selectCmd.ExecuteReader())
             {
-                var insertCmd = connectionDB.CreateCommand();
-                insertCmd.CommandText = "INSERT INTO logs_output (output_guid_device,value_device,time_device) Values(@outputguid,@valueoutput,@timestamp)";
-                insertCmd.Parameters.AddWithValue("@outputguid", serialNumber);
-                insertCmd.Parameters.AddWithValue("@valueoutput", valueOutput);
-                insertCmd.Parameters.AddWithValue("@timestamp", timeStamp);
-                insertCmd.ExecuteNonQuery();
-                transaction.Commit();
-               
-            }
-            connectionDB.Close();
 
+                while (reader.Read())
+                {
+                    OutputGuid = reader.GetString(3);
+                    ValueOutput = reader.GetString(4);
+
+
+                    MessageSend = OutputGuid + "#" + ValueOutput;
+
+                    _channel.BasicPublish(exchange: RMQExc,
+                                            routingKey: RMQPubRoutingKey,
+                                            basicProperties: null,
+                                            body: Encoding.UTF8.GetBytes(MessageSend)
+                    );
+
+                   
+
+                }
+
+                connectionDB.Close();
+            }
+             _logger.LogInformation("Sucess Send Data");
 
 
         }

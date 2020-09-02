@@ -16,8 +16,8 @@ SoftwareSerial swSerSDM(D7, D8);                                              //
 SDM sdm(swSerSDM, 9600, D5);                                                   //config SDM
 
 
-const char* ssid = "Home";
-const char* password = "AmandariLumen2018";
+const char* ssid = "LSKKHomeAuto";
+const char* password = "1234567890";
 const char* mqtt_server = "167.205.7.226";
 const char* mqtt_user = "/kwhmeter:kwhmeter";
 const char* mqtt_pass = "!!_kwhmeter";
