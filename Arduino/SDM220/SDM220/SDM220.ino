@@ -1,5 +1,4 @@
 
-
 /*
     Develop by      : Nurman Hariyanto
     Email           : nurman.hariyanto13@gmail.com
@@ -12,7 +11,7 @@
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
 
-SoftwareSerial swSerSDM(D7, D8);                                              //config SoftwareSerial (rx->D7 / tx->D8)
+SoftwareSerial swSerSDM(D2, D3);                                              //config SoftwareSerial (rx->D7 / tx->D8)
 SDM sdm(swSerSDM, 9600, D5);                                                   //config SDM
 
 
