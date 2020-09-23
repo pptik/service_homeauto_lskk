@@ -11,7 +11,7 @@
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
 
-SoftwareSerial swSerSDM(D2, D3);                                              //config SoftwareSerial (rx->D7 / tx->D8)
+SoftwareSerial swSerSDM(D7, D8);                                              //config SoftwareSerial (rx->D7 / tx->D8)
 SDM sdm(swSerSDM, 9600, D5);                                                   //config SDM
 
 
@@ -27,7 +27,7 @@ int loop_count  = 0 ; //loop count loop
 String messageSend = "";
 
 String statusDevice = "0";
-int relay1 = D1 ;
+int relay1 = D6 ;
 
 const char* device_guid = "dbcc7974-87cf-427c-915e-02f0df2c38e1";
 String output_value;
@@ -57,8 +57,8 @@ void setup() {
   printMACAddress();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
-  pinMode(D1, OUTPUT);
-  digitalWrite(D1, HIGH);
+  pinMode(D6, OUTPUT);
+  digitalWrite(D6, HIGH);
   delay(1000);
   watchdogSetup();
 }
@@ -181,7 +181,7 @@ void loop() {
   ESP.wdtFeed();
   Serial.print(loop_count);
   Serial.print(". Watchdog fed in approx. ");
-  Serial.print(loop_count * 1000);
+  Serial.print(loop_count * 500);
   Serial.println(" milliseconds.");
 
   float dataVoltage = (sdm.readVal(SDM220T_VOLTAGE));
@@ -212,16 +212,7 @@ void loop() {
   
   
   Serial.println(messageSend);
-  delay(1000);
-
-
-
-
-
-
-
-
-  
+  delay(500);
 
 
 }

@@ -10,7 +10,7 @@
 #include <SDM.h>                                                                //import SDM library
 #include <SoftwareSerial.h>                                                     //import SoftwareSerial library
 
-SoftwareSerial swSerSDM(D7,D8);                                               //config SoftwareSerial (rx->D7 / tx->D8)
+SoftwareSerial swSerSDM(D2,D3);                                               //config SoftwareSerial (rx->D7 / tx->D8)
 SDM sdm(swSerSDM, 9600, D5);                                                   //config SDM
 
 int loop_count  = 0 ; //loop count loop
