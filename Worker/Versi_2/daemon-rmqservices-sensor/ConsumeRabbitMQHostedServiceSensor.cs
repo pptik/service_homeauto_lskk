@@ -32,9 +32,12 @@ namespace daemon_rmqservices_sensor
         private static string RMQExc = ConfigurationManager.AppSettings["RMQExc"];
         private static string RMQPubRoutingKey = ConfigurationManager.AppSettings["RMQPubRoutingKey"];
         private static string DBPath = ConfigurationManager.AppSettings["DBPath"];
-        private static string serialNumber = "";
+        private static string serialNumberInput = "";
         private static string deviceName = "";
         private static string valueInput = "";
+        private static string serialNumberOutput = "";
+        private static string ValueOutput = "";
+        private static string MessageSend = "";
         public ConsumeRabbitMQHostedServiceSensor(ILoggerFactory loggerFactory)
         {
 
@@ -61,7 +64,7 @@ namespace daemon_rmqservices_sensor
                 var content = System.Text.Encoding.UTF8.GetString(body);
                 // handle the received message
                 HandleMessageToDB(content);
-                _channel.BasicAck(ea.DeliveryTag, false);
+                _channel.BasicAck(ea.DeliveryTag, true);
             };
             consumer.Shutdown += OnConsumerShutdown;
             _channel.BasicConsume(RMQQueue, false, consumer);
@@ -79,46 +82,69 @@ namespace daemon_rmqservices_sensor
             foreach (var datas in dataParsing)
             {
                 //System.Console.WriteLine($"{datas}>");
-                serialNumber = dataParsing[0];
+                serialNumberInput = dataParsing[0];
                 deviceName = dataParsing[1];
                 valueInput = dataParsing[2];
             }
             DateTime now = DateTime.Now;
-            // String timeStamp = now.ToString();
+            String timeStamp = now.ToString();
             // _logger.LogInformation($"consumer received guid {serialNumber}");
             // _logger.LogInformation($"consumer received device name {deviceName}");
             // _logger.LogInformation($"consumer received value {valueInput}");
             // _logger.LogInformation($"consumer received time {timeStamp}");
             //Open Connection Database
-            connectionDB.Open();
+             connectionDB.Open();
             // _logger.LogInformation($"connection DB Opened");
             //Create command/query with param from mesage content  
             using (var transaction = connectionDB.BeginTransaction())
             {
-                var insertCmd = connectionDB.CreateCommand();
-                 _logger.LogInformation($"Try insert data to DB ...");
-                insertCmd.CommandText = "insert INTO logsecurity (input_guid,name_device,value_device,time_stamp)VALUES(@input_guid,@device_name,@value_device,@time_stamp)";
-                insertCmd.Parameters.AddWithValue("@input_guid", serialNumber);
-                insertCmd.Parameters.AddWithValue("@device_name", deviceName);
-                insertCmd.Parameters.AddWithValue("@value_device", valueInput);
-                insertCmd.Parameters.AddWithValue("@time_stamp", timeStamp);
-                //  _logger.LogInformation($"ESuccess Get Data from payload..");
-                insertCmd.ExecuteNonQuery();
-                //  _logger.LogInformation($"Execute Command Insert..");
-                transaction.Commit();
+            var insertCmd = connectionDB.CreateCommand();
+            //     // _logger.LogInformation($"Try insert data to DB ...");
+            insertCmd.CommandText = "insert INTO logsecurity (input_guid,name_device,value_device,time_stamp)VALUES(@SerialnumberInput,@device_name,@value_device,@time_stamp)";
+            insertCmd.Parameters.AddWithValue("@SerialnumberInput", serialNumberInput);
+            insertCmd.Parameters.AddWithValue("@device_name", deviceName);
+            insertCmd.Parameters.AddWithValue("@value_device", valueInput);
+            insertCmd.Parameters.AddWithValue("@time_stamp", timeStamp);
+            //     //  _logger.LogInformation($"ESuccess Get Data from payload..");
+            insertCmd.ExecuteNonQuery();
+            //     //  _logger.LogInformation($"Execute Command Insert..");
+            transaction.Commit();
+            // }
+            _logger.LogInformation($"success insert dats to DB");
+            // connectionDB.Close();
             }
-            //  _logger.LogInformation($"success insert dats to DB");
-            connectionDB.Close();
-
-            if(device_name == "BL_SMOKE" valueInput == "1")
+            if(deviceName == "BL_SMOKE" && valueInput == "1")
             {
-                connectionDB.Open();
+                //connectionDB.Open();
                 var selectCmd = connectionDB.CreateCommand();
-                selectCmd.CommandText = "SELECT * FROM activityiot  WHERE input_guid=@Guidinput AND input_value=@Valueinput";
-                selectCmd.Parameters.AddWithValue("@Guidinput", InputGuid);
-                selectCmd.Parameters.AddWithValue("@Valueinput", ValueInput);
-                
+                selectCmd.CommandText = "SELECT * FROM rulesecurity  WHERE input_guid=@Guidinput AND name_device_input=@Valueinput";
+                selectCmd.Parameters.AddWithValue("@Guidinput", serialNumberInput);
+                selectCmd.Parameters.AddWithValue("@Valueinput", deviceName);
+                using (var reader = selectCmd.ExecuteReader())
+                {
+
+                    while (reader.Read())
+                    {
+                        serialNumberOutput = reader.GetString(3);
+                        ValueOutput = reader.GetString(5);
+
+                        _logger.LogInformation($"guid output{serialNumberOutput}");
+                        _logger.LogInformation($"value output{ValueOutput}");
+                         MessageSend = serialNumberOutput + "#" + ValueOutput;
+
+                        _channel.BasicPublish(exchange: RMQExc,
+                                            routingKey: RMQPubRoutingKey,
+                                            basicProperties: null,
+                                            body: Encoding.UTF8.GetBytes(MessageSend)
+                    );
+
+                    }
+
+                    
+                }
             }
+            connectionDB.Close();
+        
         }
 
 
